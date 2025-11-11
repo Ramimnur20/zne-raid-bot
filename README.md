@@ -1,4 +1,5 @@
 <div align="center">
+  
 # 🌙 ZNE
 
 **ZNE** is a **Discord raid bot**.  
