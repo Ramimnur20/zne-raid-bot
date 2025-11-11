@@ -1,5 +1,5 @@
 <div align="center">
-
+# HELP US REACH 100 MEMBERS BEFORE 2026! https://discord.gg/xHQecAgr9j
 # 🌙 ZNE
 
 **ZNE** is a **Discord raid bot**.  
