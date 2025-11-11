@@ -1150,7 +1150,7 @@ async def on_ready():
 
 
 if __name__ == "__main__":
-    TOKEN = "MTQzNDc2OTA4ODA3MjI1NzY3Nw.GDp51v.3-5YJEFGKJ0sjXdv2T6PVHOzZ29iRMK0pP60-I"
+    TOKEN = "entertokenhere"
 
     while True:
         try:
