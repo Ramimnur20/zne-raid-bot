@@ -1,5 +1,5 @@
-# made by Ramim (handle4ramim)
-# there might be lots of code that isnt even used anymore i was too lazy to remove it
+# made by ramim using a100's code
+# its there to make sure no one thinks im a skid lmao
 import os
 import re
 import io
@@ -19,14 +19,13 @@ from discord import User, Embed, Interaction, Permissions, AllowedMentions, Butt
 from discord.ext import commands
 from discord.ui import Modal, TextInput, View, Button
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-
 import requests
 
 init(autoreset=True)
 
-LOG_WEBHOOK_URL = "https://discord.com/api/webhooks/1434940984374067472/jW5MvKXS-H-bX2CaXXC6TiwDPgPG-HdzdRI6kumqLnFZhPnzM7uPEClVy3Y48RiiRe9M" # webhook for all logs
+LOG_WEBHOOK_URL = "" # webhook for all logs
+PREMIUM_FILE = "premium.json"
 PRESETS_FILE = "presets.json"
-
 
 class RateLimitFilter(logging.Filter):
     def filter(self, record):
@@ -65,6 +64,35 @@ class CooldownManager:
             del self.user_timestamps[user]
 
 cooldown_manager = CooldownManager(100)
+
+
+def load_premium_users():
+    if not os.path.exists(PREMIUM_FILE):
+        return []
+    with open(PREMIUM_FILE, "r") as f:
+        return json.load(f)
+
+def save_premium_users(user_ids):
+    with open(PREMIUM_FILE, "w") as f:
+        json.dump(user_ids, f, indent=2)
+
+def add_premium_user(user_id: int):
+    premium_users = load_premium_users()
+    if user_id not in premium_users:
+        premium_users.append(user_id)
+        save_premium_users(premium_users)
+
+def is_premium_user(user_id: int):
+    premium_users = load_premium_users()
+    return user_id in premium_users
+
+def remove_premium_user(user_id: int) -> bool:
+    premium_users = load_premium_users()
+    if user_id in premium_users:
+        premium_users.remove(user_id)
+        save_premium_users(premium_users)
+        return True
+    return False
 
 def update_leaderboard(user_id: int):
     leaderboard_file = "leaderboard.json"
@@ -138,15 +166,11 @@ def load_token():
 
 logo = f"""{Fore.MAGENTA}
 
-  _______        _ _ _                _____                       _ 
- |__   __|      | | (_)              / ____|                     | |
-    | |_ __ ___ | | |_ _ __   __ _  | (___   __ _ _   _  __ _  __| |
-    | | '__/ _ \| | | | '_ \ / _` |  \___ \ / _` | | | |/ _` |/ _` |
-    | | | | (_) | | | | | | | (_| |  ____) | (_| | |_| | (_| | (_| |
-    |_|_|  \___/|_|_|_|_| |_|\__, | |_____/ \__, |\__,_|\__,_|\__,_|
-                              __/ |            | |                  
-                             |___/             |_|                  
-{Fore.WHITE}     vroom! vroom!                        
+  ___ _  _ ___  ___  __  __ _  _ ___   _   
+ |_ _| \| / __|/ _ \|  \/  | \| |_ _| /_\  
+  | || .` \__ \ (_) | |\/| | .` || | / _ \ 
+ |___|_|\_|___/\___/|_|  |_|_|\_|___/_/ \_\
+{Fore.WHITE}     raiding made easy                        
  
 """
 
@@ -157,6 +181,33 @@ def display_status(connected):
         print(Fore.GREEN + "Status: Connected")
     else:
         print(Fore.RED + "Status: Disconnected")
+
+def token_management():
+    os.system('cls' if os.name == 'nt' else 'clear') 
+    print(Fore.CYAN + "Welcome to the bot token management!\n")
+    print("1. Set new token")
+    print("2. Load previous token")
+    
+    print()
+
+    choice = input(f"{Fore.YELLOW}>{Fore.WHITE} Choose an option (1, 2){Fore.YELLOW}:{Fore.WHITE} ")
+
+    if choice == "1":
+        new_token = input(Fore.GREEN + "Enter the new token: ")
+        save_token(new_token)
+        print(Fore.GREEN + "Token successfully set!")
+        return new_token
+    elif choice == "2":
+        token = load_token()
+        if token:
+            print(f"{Fore.GREEN}>{Fore.WHITE} Previous token loaded: {Fore.GREEN}{token}{Fore.WHITE}.")
+            return token
+        else:
+            print(Fore.RED + "No token found.")
+            return None
+    else:
+        print(Fore.RED + "Invalid choice. Please try again.")
+        return None
 
 async def log_command_use(
     user: discord.User,
@@ -295,17 +346,19 @@ class PresetView(View):
         else:
             await interaction.response.send_message("⚠️ No preset message found. Please set one first.", ephemeral=True)
 
-@bot.tree.command(name="preset-message", description="Manage your custom message preset.")
+@bot.tree.command(name="preset-message", description="Manage your custom raid message preset.")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def preset_message(interaction: discord.Interaction):
+    if not is_premium_user(interaction.user.id):
+        await interaction.response.send_message("💎 This command is only available for premium users.", ephemeral=True)
+        return
     view = PresetView(user_id=interaction.user.id)
     embed = discord.Embed(
         title="⚡ Preset Message",
-        description="Use the buttons below to set or preview your message.",
+        description="Use the buttons below to set or preview your raid message.",
         color=0xa874d1
     )
     await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-
 
 class SpamButton(discord.ui.View):
     def __init__(self, message):
@@ -319,21 +372,19 @@ class SpamButton(discord.ui.View):
         for _ in range(5):  
             await interaction.followup.send(self.message, allowed_mentions=allowed)  
 
-@bot.tree.command(name="custom-raid", description="Custom Raid with your Message")
+@bot.tree.command(name="custom-raid", description="[💎] Premium Raid with your own message. (premium only!)")
 @app_commands.describe(message="Optional: your custom message to spam (use /preset-message if you want to save it)")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def custom_raid(interaction: discord.Interaction, message: str = None):
+    if not is_premium_user(interaction.user.id):
+        await interaction.response.send_message("💎 This command is only available for premium users.", ephemeral=True)
+        return
 
     if not message:
         message = get_preset(interaction.user.id)
         if not message:
-            await interaction.response.send_message(
-                "You don't have a preset message saved. Use /preset-message to set one.",
-                ephemeral=True
-            )
+            await interaction.response.send_message("❌ You have not set a preset message. Use `/preset-message` to set one.", ephemeral=True)
             return
-
-    # Put your raid-but-not-a-raid logic here
 
     view = SpamButton(message)
     await interaction.response.send_message(f"💎 SPAM TEXT:\n```{message}```", view=view, ephemeral=True)
@@ -370,11 +421,11 @@ class PingButton(discord.ui.View):
             mentions = " ".join(f"<@{uid}>" for uid in selected_ids)
             pingmsg = '''
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                                  ***@ZNE**  
+                                  ***@ZNE**   `🌙`
                   raid b__o__t  ﹒ s__o__cial  ﹒ to__xic__
                          `🌟`     _join to [RAID](https://tenor.com/view/playboi-carti-discord-discord-raid-gif-21005635) any server __Without Admin perms__, free to use_ :moneybag: 
 
-⠀⠀⠀⠀⠀⠀⠀                            **[JOIN](https://discord.gg/RnudBmu54Z) TODAY, AND R__AI__D EVER__Y__ SERVER YOU WANT WITHOUT [ADMIN](https://tenor.com/view/mooning-show-butt-shake-butt-pants-down-gif-17077775)**
+⠀⠀⠀⠀⠀⠀⠀                            **[JOIN](https://discord.gg/4urameavzE) TODAY, AND R__AI__D EVER__Y__ SERVER YOU WANT WITHOUT [ADMIN](https://tenor.com/view/mooning-show-butt-shake-butt-pants-down-gif-17077775)**
             '''
             message_content = f"{mentions}\n{pingmsg}"
             retries = 0
@@ -694,34 +745,39 @@ RAGEBAIT = ["""
 # JOIN ZNE AND START RAIDING
 # JOIN ZNE AND START RAIDING
 # JOIN ZNE AND START RAIDING
-https://cdn.discordapp.com/attachments/1417474313052880916/1426148719841120297/Trolling_Squad.gif?ex=68ea2bff&is=68e8da7f&hm=29f914a44d1e72298669b3b224af1be2a20f0bc93f837ae3371eb04b1c77d665&
+# JOIN ZNE AND START RAIDING
+# JOIN ZNE AND START RAIDING
+# JOIN ZNE AND START RAIDING
+@everyone
+discord.gg/4urameavzE
+https://tenor.com/view/mooning-show-butt-shake-butt-pants-down-gif-17077775
 https://media.discordapp.net/attachments/1215053612028526653/1219435249763750028/1218622476645564527_1650x1080.gif?ex=686c5f93&is=686b0e13&hm=1f0bd7f260f88162001a02772b415d14168a43cf7ee7cc94c2c9f03af54d9bed&
     """,
     """
-# YOU HAVE BEEN RAIDED BY [TROLLING SQUAD 🆘](https://cdn.discordapp.com/attachments/1417474313052880916/1426148719841120297/Trolling_Squad.gif?ex=68ea2bff&is=68e8da7f&hm=29f914a44d1e72298669b3b224af1be2a20f0bc93f837ae3371eb04b1c77d665&)
+# YOU HAVE BEEN RAIDED BY [ZNE 🆘](https://tenor.com/view/mooning-show-butt-shake-butt-pants-down-gif-17077775)
 # RAID ANY SERVER WITHOUT ADMIN PERMS 🔐
 # FREE, EASY TO USE, UP 24/7
 # ANONYMOUSLY RAID ANY SERVER YOU WANT
-# "IF YOU CANT BEAT THEM, [JOIN](https://discord.gg/RnudBmu54Z) THEM! @everyone"
+# "IF YOU CANT BEAT THEM, [JOIN](https://discord.gg/4urameavzE) THEM! @everyone"
 ⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀                            [JOIN TROLLING SQUAD, RAID ANY SERVER YOU WANT, ANYTIME, ANYWHERE, ANYWHERE](https://discord.gg/A7JQjDVrUG)
+⠀⠀⠀⠀⠀⠀⠀                            [JOIN ZNE, RAID ANY SERVER YOU WANT, ANYTIME, ANYWHERE, ANYWHERE](https://discord.gg/4urameavzE)
  
 [穹忩犈垃箚泗趨菋纳攇幀驼懅七](https://cdn.discordapp.com/attachments/1153733814732992573/1166450104350290020/d480327590432d30f979d4ce46baea6b.gif?ex=686e1290&is=686cc110&hm=312bf638b772621b7e9f33ac2f62832c5d417a7dbd08a307d5ae94e96cc9d8d1&)
     """,
     """
-# [TROLLING SQUAD](https://discord.gg/RnudBmu54Z) OWNS ME AND ALL :zany_face: 
+# [ZNE](https://discord.gg/4urameavzE) OWNS ME AND ALL :zany_face: 
 # GET RAIDED U BRAINDEAD NIGGERS :rofl: :rofl: :rofl:
 # IMAGINE U CANT SETUP A SERVER LMAOOOO
-# BETTER [JOIN](https://discord.gg/RnudBmu54Z) TROLLING SQUAD AND START RAIDING U TWAT 
-https://cdn.discordapp.com/attachments/1417474313052880916/1426148719841120297/Trolling_Squad.gif?ex=68ea2bff&is=68e8da7f&hm=29f914a44d1e72298669b3b224af1be2a20f0bc93f837ae3371eb04b1c77d665&
+# BETTER [JOIN](https://discord.gg/4urameavzE) ZNE AND START RAIDING U TWAT 
+https://tenor.com/view/cat-hacking-silly-cat-hacker-cat-hacker-gif-14852445362476137270
 [穹忩犈垃箚泗趨菋纳攇幀驼懅七](https://cdn.discordapp.com/attachments/1153733814732992573/1166450104350290020/d480327590432d30f979d4ce46baea6b.gif?ex=686e1290&is=686cc110&hm=312bf638b772621b7e9f33ac2f62832c5d417a7dbd08a307d5ae94e96cc9d8d1&)
 @everyone
     """,
     """
-# [TROLLING SQUAD](https://cdn.discordapp.com/attachments/1417474313052880916/1426148719841120297/Trolling_Squad.gif?ex=68ea2bff&is=68e8da7f&hm=29f914a44d1e72298669b3b224af1be2a20f0bc93f837ae3371eb04b1c77d665&1) __DOMINATES__ ALL 👑
+# [ZNE](https://tenor.com/view/flashbang-guy-screaming-guy-getting-flashbang-blinded-blinding-gif-1425127881206275521) __DOMINATES__ ALL 👑
 # GET __RAIDED__, YOU RETARDS CAN'T HANDLE THIS 😭 🥀 🥀
 # IMAGINE NOT BEING ABLE TO SETUP A SERVER LMAO
-# BETTER [JOIN](https://discord.gg/RnudBmu54Z) TROLLING SQUAD AND START RAIDING, YOU KNOW YOU WANT TO!
+# BETTER [JOIN](https://discord.gg/4urameavzE) ZNE AND START RAIDING, YOU KNOW YOU WANT TO!
 @everyone
     """
 ]
@@ -729,77 +785,25 @@ https://cdn.discordapp.com/attachments/1417474313052880916/1426148719841120297/T
 
 SCARY = [
     """
-    # [TROLLING SQUAD](https://discord.gg/RnudBmu54Z)
-    # [TROLLING SQUAD](https://cdn.discordapp.com/attachments/1417474313052880916/1426148719841120297/Trolling_Squad.gif?ex=68ea2bff&is=68e8da7f&hm=29f914a44d1e72298669b3b224af1be2a20f0bc93f837ae3371eb04b1c77d665&)
-    # [TROLLING SQUAD](https://cdn.discordapp.com/attachments/1416037733322719364/1418258241879539733/RussianSleepExperimentGuy.png?ex=68cd776a&is=68cc25ea&hm=4141a571871aebcf5e93aa57d505285a924103536892e8a5b3ff0636c7ff2590&)
+    # [ZNE](https://media.tenor.com/uw5s-aHlviAAAAAM/scary-ghost.gif)
+    # [ZNE](https://discord.gg/4urameavzE)
+    # [ZNE](https://tenor.com/view/yapping-creepy-under-the-bed-talking-ghost-gif-10296050582380126660)
+    # [ZNE](https://cdn.discordapp.com/attachments/1416037733322719364/1418258241879539733/RussianSleepExperimentGuy.png?ex=68cd776a&is=68cc25ea&hm=4141a571871aebcf5e93aa57d505285a924103536892e8a5b3ff0636c7ff2590&)
     @everyone
     """,
     """
-    # [TROLLING SQUAD](https://media.tenor.com/HMtY33kDWFwAAAAM/donk.gif)
-    # [TROLLING SQUAD](https://nightmarenostalgia.com/wp-content/uploads/2023/07/main-qimg-522ae83e590c80bfaf895b3919462bcb.gif?w=480)
-    # [TROLLING SQUAD](https://cdn.discordapp.com/attachments/1417474313052880916/1426148719841120297/Trolling_Squad.gif?ex=68ea2bff&is=68e8da7f&hm=29f914a44d1e72298669b3b224af1be2a20f0bc93f837ae3371eb04b1c77d665&)
-    # [TROLLING SQUAD](https://discord.gg/RnudBmu54Z)
+    # [ZNE](https://media.tenor.com/HMtY33kDWFwAAAAM/donk.gif)
+    # [ZNE](https://nightmarenostalgia.com/wp-content/uploads/2023/07/main-qimg-522ae83e590c80bfaf895b3919462bcb.gif?w=480)
+    # [ZNE](https://media.tenor.com/ihDOwbsgwRcAAAAM/scary-scary-face.gif)
+    # [ZNE](https://discord.gg/4urameavzE)
     @everyone
     """
-]
-
-NORMAL = [
-    """
-``` 
-                                                          
-```
-***BETTER [JOIN](https://discord.gg/RnudBmu54Z) TROLLING SQUAD AND START RAIDING***
-[TROLLING SQUAD ON TOP](https://tenor.com/view/shawn-breezy-gamma-male-gif-13452613280176262444)
-@everyone
-
-    
-    """,
-    """
-```
-ZNE on top
-```
-***[JOIN](https://discord.gg/A7JQjDVrUG) ZNE AND START RAIDING TODAY***
-***FREE TO USE, NO PERMS NEEDED***
-@everyone
-
-    """,
-    """
-```diff
-                                                               
-```
-***[JOIN](https://discord.gg/A7JQjDVrUG) ZNE AND START RAIDING TODAY***
-***[FREE](https://tenor.com/view/discord-discordgifemoji-red-blink-gif-13138334) TO USE, NO PERMS NEEDED***
-@everyone
-    """
-]
-
-MOE = [
-    """
-# [Uwu](https://discord.gg/A7JQjDVrUG) G-G-GET (uwu) W-W-WAIDED (˘³˘) B-B-BY ˚(ꈍ ω ꈍ).₊̣̇. I-I-I-[TWOWWING SQUAD](https://pa1.aminoapps.com/5985/ded984459526799715a26557194711a049e81c6e_hq.gif) (◡ ꒳ ◡)
-@everyone
-    """,
-    """
-
-# I-I-TWOWWING SQUAD O-O-ON (˘ω˘) T-T-TOP U-u-u [UwU](https://discord.gg/A7JQjDVrUG) F-F-FUCKING (。U ω U。) N-N-N-NIGGERS
-@everyone
-    """,
-    """
-# J-J-J-JOIN I-I-[TWOWWING SQUAD](https://66.media.tumblr.com/43763839ac3e228314a43a0ffcced591/tumblr_p3jog4Xk5g1x09foko1_400.gif) x3 A-A-A-AND S-S-STAWT W-W-WAIDING :3 T-T-T-TODAY
-# NYO P-P-P-PEWMS uwU N-N-NYEEDED, (U ﹏ U) F-F-F-FWEE T-T-TO U-U-U-USE [(⑅˘꒳˘)](https://discord.gg/A7JQjDVrUG)
-@everyone
-    """
-]
-
-SKIBIDI = [
-"""
-# @here @everyone JOIN THE [BEST](https://tenor.com/view/molorant-wibugus-join-us-gif-25692550) 3 DISCORD SERVERS AT THIS [LINK](https://discord.gg/8RtvnURQVz) 🔗  PROJECT GAMING, SKIBIDI KINGDOM, AND PROJECT SPEED DRIVE
-"""
 ]
 
 THUG = [
 """
 # @everyone
-# https://discord.gg/RnudBmu54Z
+# https://discord.gg/4urameavzE
 # https://cdn.discordapp.com/attachments/1328198321549873170/1435067852125241404/x-downloader.com_sQe9oS.mov?ex=690bf016&is=690a9e96&hm=d4d55bfaa3caa06e5c00b143dce3601fdf398c94487aece676149d146d7bcf92&
 # https://cdn.discordapp.com/attachments/1328198321549873170/1435334505769734225/lv_0_20251104202536.mp4?ex=690c3fad&is=690aee2d&hm=152cadada93f4a3b492a809dab92a6c57577800100aea6e4445d7dc7b9596f98&
 # https://cdn.discordapp.com/attachments/1328198321549873168/1434966854354342042/Screen_Recording_20250318_213048_Discord.mp4?ex=690c3ac6&is=690ae946&hm=bd3371ef632a82835603513867a3659b4c20f6bea9301e6555ba6d6118d06e80&
@@ -807,7 +811,7 @@ THUG = [
 
 """
 # @everyone
-# https://discord.gg/RnudBmu54Z
+# https://discord.gg/4urameavzE
 # https://cdn.discordapp.com/attachments/1328198321549873168/1434998533391384638/caption.gif?ex=690baf87&is=690a5e07&hm=e3f21c157324c2d17cfbd2c2805c2137b10273860eb3f64fa1f0e615c9aa566a&
 # https://cdn.discordapp.com/attachments/1328198321549873168/1435044195571339264/yallgonmakmibus.mp4?ex=690bda0e&is=690a888e&hm=87269b7b8d8fcf4177124f0816a16f974122f1d2d909ac2e8306d9602bfb6c0f&
 # https://cdn.discordapp.com/attachments/1328198321549873168/1435396524166221967/RDT_20231016_230719.mp4?ex=690bd0af&is=690a7f2f&hm=2cf3a1940b2e80bff7e42bf5b55e71a7163b1f7f487ea257fdfff9be3c7c4b6a&
@@ -815,7 +819,7 @@ THUG = [
 
 """
 # @everyone
-# https://discord.gg/RnudBmu54Z
+# https://discord.gg/4urameavzE
 # https://cdn.discordapp.com/attachments/1328198321549873168/1434752159425232977/image0.jpg?ex=690c1b93&is=690aca13&hm=9656386d21da56a252912e47a088fd05734084dc3f2f87db875fd77b7ac37a15&
 # https://cdn.discordapp.com/attachments/1328198321549873168/1434713726350528626/lv_0_20240713232041-1.mp4?ex=690bf7c8&is=690aa648&hm=5a092fcef3b135bc57e42c3592792274746c4f91295aac3c791c17850c2fe3ca&
 # https://cdn.discordapp.com/attachments/1328198321549873168/1434713437942055061/-1390408780751690326.mp4?ex=690bf783&is=690aa603&hm=23f5fc559986200021585d19fb03edd43884af53840374bc0e07f4229fef4fec&
@@ -823,7 +827,7 @@ THUG = [
 
 """
 # @everyone
-# https://discord.gg/RnudBmu54Z
+# https://discord.gg/4urameavzE
 # https://cdn.discordapp.com/attachments/1328198321549873168/1436391015232700537/ssstwitter.com_1762382218309.mp4?ex=691017a0&is=690ec620&hm=c748644e56064aa68c9f4569536a356b7968fc66c00c057a831b3f1f8f48edc4&
 # https://cdn.discordapp.com/attachments/1328198321549873168/1436328764505063477/BIRTHDAY-1.mp4?ex=69108667&is=690f34e7&hm=71fb41800d363202ef54ce092c12c85d9663d2a343fdb0caa63fae399fc14d64&
 # https://cdn.discordapp.com/attachments/1328198321549873168/1436173818442809455/2025-10-13-223055307.mp4?ex=690ff619&is=690ea499&hm=bec1cf145e3c3803130036f6c160fb5dedb8e7b6cca3c4ae25ba80ed9913efbb&
@@ -831,7 +835,7 @@ THUG = [
 
 """
 # @everyone
-# https://discord.gg/RnudBmu54Z
+# https://discord.gg/4urameavzE
 # https://cdn.discordapp.com/attachments/1328198321549873168/1436173202207281352/655387ff42aa253083283c7e32d6115a.mp4?ex=690ff586&is=690ea406&hm=7f0f9fd031deca53912583a182f70031240918cdea99dc3ab41ef9c346c1e402&
 # https://cdn.discordapp.com/attachments/1328198321549873168/1436171490587574323/IMG-20250829-WA0103.jpg?ex=690ff3ee&is=690ea26e&hm=04dd9b9136fd5b48812f4f3ff5f04c1c42d59b0c078214f7059b38a9ee8f8859&
 # https://cdn.discordapp.com/attachments/1328198321549873168/1436059623063818301/Screenshot_2025-07-15_214614.png?ex=6910347e&is=690ee2fe&hm=6a0ccb1b5d9ec5726f57708d61d375b2e94092ce8cafa5ec2276753d15327e76&
@@ -857,7 +861,7 @@ class BspamButton(discord.ui.View):
 @bot.tree.command(name="b-spam", description="Spam random messages with different styles.")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 @app_commands.describe(
-    style="Choose spam style (ragebait, scary, normal, moe, skibidi)",
+    style="Choose spam style (ragebait, scary, ascii, hentai)",
     delay="Delay between messages (0.01 to 5.00 seconds)."
 )
 async def bspam(interaction: discord.Interaction, style: str, delay: float = 0.5):
@@ -873,16 +877,10 @@ async def bspam(interaction: discord.Interaction, style: str, delay: float = 0.5
         spam_list = RAGEBAIT
     elif style == "scary":
         spam_list = SCARY
-    elif style == "normal":
-        spam_list = NORMAL
-    elif style == "moe":
-        spam_list = MOE
-    elif style == "skibidi":
-        spam_list = SKIBIDI
     elif style == "thug":
         spam_list = THUG
     else:
-        await interaction.response.send_message("❌ Invalid style! Choose `ragebait`, `scary` or `normal`.", ephemeral=True)
+        await interaction.response.send_message("❌ Invalid style! Choose `standart`, `scary` or `ascii`.", ephemeral=True)
         return
 
     view = BspamButton(spam_list, delay)
@@ -897,7 +895,7 @@ async def bspam(interaction: discord.Interaction, style: str, delay: float = 0.5
 @bspam.autocomplete("style")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def style_autocomplete(interaction: discord.Interaction, current: str):
-    styles = ["ragebait", "scary", "normal", "moe", "thug"]
+    styles = ["ragebait", "scary", "thug"]
     return [
         app_commands.Choice(name=s, value=s)
         for s in styles if current.lower() in s
@@ -914,15 +912,12 @@ async def araid(interaction: discord.Interaction, delay: float = 0.01):
         return
 
     raid_message = '''
-    ⠀⠀⠀⠀
-⠀⠀⠀⠀
-     
-                                  ***@TROLLING SQUAD**   `🌙`
-                  raid b__o__t  ﹒ s__o__cial  ﹒ to__xic__
-                         `🌟`     _join to [RAID](https://tenor.com/view/playboi-carti-discord-discord-raid-gif-21005635) any server __Without Admin perms__, free to use_ :moneybag:
-⠀⠀⠀⠀⠀⠀⠀                            **[JOIN](https://discord.gg/RnudBmu54Z) TODAY, AND R__AI__D EVER__Y__ SERVER YOU WANT WITHOUT [ADMIN](https://tenor.com/view/mooning-show-butt-shake-butt-pants-down-gif-17077775)** @everyone
-    '''
-
+    # @everyone
+    ## **Can't** even *Setup a Server* properly LMAO join **ZNE** for fast and EASY Raiding today!
+    # ZNE owns you For Sure!, Join NOW for **Easy Raiding**
+    # **THE** Only server who *isn't* a [Discord Gangster](https://tenor.com/view/playboi-carti-discord-discord-raid-gif-21005635)
+    # [Join](https://discord.gg/4urameavzE) ZNE today
+'''
     try:
         view = FloodButton(raid_message, delay)
         await interaction.response.send_message("Press the button to start raiding.", view=view, ephemeral=True)
@@ -947,12 +942,12 @@ async def araid(interaction: discord.Interaction, delay: float = 0.01):
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 @app_commands.user_install()
 async def say(interaction: discord.Interaction, message: str):
-
-    # You probably *meant* to have logic here, but here's at least a valid structure.
-    full_message = f"{message}"
+    if is_premium_user(interaction.user.id):
+        full_message = f"{message}"
+    else:
+        full_message = f"{message} \n\n discord.gg/4urameavzE"
 
     await interaction.response.send_message("Sending.. 🔊", ephemeral=True)
-
     allowed = discord.AllowedMentions(everyone=True, users=True, roles=True)
     await interaction.followup.send(full_message, allowed_mentions=allowed)
 
@@ -962,8 +957,8 @@ async def say(interaction: discord.Interaction, message: str):
         message=message,
         channel=interaction.channel
     )
-
     update_leaderboard(interaction.user.id, "say")
+
 
 @bot.tree.command(
     name="ghostping",
@@ -999,6 +994,30 @@ async def ghostping(
                 raise
 
 whitelist = config.get("whitelist", [])
+
+@bot.tree.command(name="x-add-premium", description="Grant premium access to a user. (owner only)")
+@app_commands.describe(user="The user to grant premium access to")
+async def add_premium(interaction: discord.Interaction, user: discord.User):
+    if interaction.user.id not in whitelist:
+        await interaction.response.send_message("❌ You don't have permission to use this command.", ephemeral=True)
+        return
+    
+    add_premium_user(user.id)
+    await interaction.response.send_message(f"✅ {user.mention} has been granted premium access!", ephemeral=False)
+
+@bot.tree.command(name="x-rem-premium", description="Remove premium access from a user. (owner only)")
+@app_commands.describe(user="The user to remove premium access from")
+async def rem_premium(interaction: discord.Interaction, user: discord.User):
+    if interaction.user.id not in whitelist:
+        await interaction.response.send_message("❌ You don't have permission to use this command.", ephemeral=True)
+        return
+
+    removed = remove_premium_user(user.id)
+    if removed:
+        await interaction.response.send_message(f"✅ User {user.mention} has been removed from premium access!", ephemeral=False)
+    else:
+        await interaction.response.send_message(f"⚠️ User {user.mention} does not have premium access.", ephemeral=True)
+
 
 
 class RoastButton(discord.ui.View):
@@ -1059,6 +1078,52 @@ def random_time_today():
     random_time = base_date + timedelta(minutes=random_minutes)
     return random_time
 
+@bot.tree.command(name="spoof-message", description="Send a realistic fake message as image.")
+@app_commands.describe(username="Name to display", message="Fake message to show", avatar_url="Avatar image URL")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+async def spoof_image(interaction: discord.Interaction, username: str, message: str, avatar_url: str = None):
+    await interaction.response.send_message("🕵️ Spoofing message...", ephemeral=True)
+
+    if not avatar_url:
+        avatar_url = "https://cdn.discordapp.com/embed/avatars/0.png"
+
+    response = requests.get(avatar_url)
+    avatar = Image.open(BytesIO(response.content)).convert("RGBA")
+    avatar = avatar.resize((40, 40), Image.LANCZOS)
+
+    mask = Image.new("L", avatar.size, 0)
+    draw_mask = ImageDraw.Draw(mask)
+    draw_mask.ellipse((0, 0) + avatar.size, fill=255)
+    avatar = ImageOps.fit(avatar, mask.size, centering=(0.5, 0.5))
+    avatar.putalpha(mask)
+
+    width, height = 800, 80
+    img = Image.new("RGBA", (width, height), "#36393F")
+    draw = ImageDraw.Draw(img)
+
+    font_bold = ImageFont.truetype("arialbd.ttf", 18)
+    font_regular = ImageFont.truetype("arial.ttf", 16)
+    font_timestamp = ImageFont.truetype("arial.ttf", 12)
+
+    img.paste(avatar, (20, 20), avatar)
+    now = random_time_today().strftime("Today at %I:%M %p").lstrip("0").replace(" 0", " ")
+
+    draw.text((70, 18), username, font=font_bold, fill=(255, 255, 255))
+    draw.text((70 + draw.textlength(username, font=font_bold) + 10, 21), now, font=font_timestamp, fill=(153, 170, 181))
+    draw.text((70, 45), message, font=font_regular, fill=(220, 221, 222))
+
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+    file = discord.File(fp=buffer, filename="spoof.png")
+
+    await interaction.followup.send(file=file)
+
+    await log_command_use(user=interaction.user, command_name="spoof-message", message=message)
+    update_leaderboard(interaction.user.id, "spoof-message")
+
+
+
 @bot.tree.command(name="blame", description="Blame somebody else for raiding, and get them banned!")
 @app_commands.describe(user="📰 The user you want to blame..")
 async def blame(interaction: discord.Interaction, user: discord.User):
@@ -1086,11 +1151,14 @@ async def anon_dm(interaction: discord.Interaction, user: discord.User, message:
     )
 
 
-@bot.tree.command(name="flooduser", description="Flood a user's DMs with messages.)")
+@bot.tree.command(name="flooduser", description="[💎] Flood a user's DMs with messages. (premium only!)")
 @app_commands.describe(user="The user to DM spam", message="Message to spam", times="How many times to send", delay="Delay between messages (in sec)")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 @app_commands.user_install()
 async def flooduser(interaction: discord.Interaction, user: discord.User, message: str, times: int = 5, delay: float = 0.3):
+    if not is_premium_user(interaction.user.id):
+     await interaction.response.send_message("💎 This command is only available for premium users.", ephemeral=True)
+     return
     await interaction.response.send_message("Flooding user... 💣", ephemeral=True)
     await log_command_use(
         user=interaction.user,
@@ -1105,36 +1173,6 @@ async def flooduser(interaction: discord.Interaction, user: discord.User, messag
         except discord.Forbidden:
             await interaction.followup.send("❌ Could not DM user (they may have DMs closed).", ephemeral=True)
             break
-@bot.tree.command(name="x-add-blacklist", description="Blacklist a user from using the bot. (owner only)")
-@app_commands.describe(user="The user to blacklist")
-async def add_blacklist(interaction: discord.Interaction, user: discord.User):
-    if str(interaction.user.id) not in [str(i) for i in config.get("whitelist", [])]:
-        await interaction.response.send_message("❌ You don't have permission to use this command.", ephemeral=True)
-        return
-
-    if str(user.id) in blacklist_data["users"]:
-        await interaction.response.send_message(f"⚠️ {user.mention} is already blacklisted.", ephemeral=True)
-        return
-
-    blacklist_data["users"].append(str(user.id))
-    save_blacklist()
-    await interaction.response.send_message(f"🚫 {user.mention} has been blacklisted from using the bot.")
-
-
-@bot.tree.command(name="x-rem-blacklist", description="Remove a user from the blacklist. (owner only)")
-@app_commands.describe(user="The user to remove from blacklist")
-async def rem_blacklist(interaction: discord.Interaction, user: discord.User):
-    if str(interaction.user.id) not in [str(i) for i in config.get("whitelist", [])]:
-        await interaction.response.send_message("❌ You don't have permission to use this command.", ephemeral=True)
-        return
-
-    if str(user.id) not in blacklist_data["users"]:
-        await interaction.response.send_message(f"⚠️ {user.mention} is not blacklisted.", ephemeral=True)
-        return
-
-    blacklist_data["users"].remove(str(user.id))
-    save_blacklist()
-    await interaction.response.send_message(f"✅ {user.mention} has been removed from the blacklist.")
 
 
 
@@ -1150,7 +1188,7 @@ async def on_ready():
 
 
 if __name__ == "__main__":
-    TOKEN = "entertokenhere"
+    TOKEN = "enter the token here boi"
 
     while True:
         try:
