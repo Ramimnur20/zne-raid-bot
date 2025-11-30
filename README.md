@@ -4,11 +4,10 @@
 
 **ZNE** is a **Discord raid bot**.  
 It is designed to be a **fast and good raider** and demonstrate new ways of raiding servers by bypassing some limits.
-HELP US REACH 100 MEMBERS BEFORE 2026! https://discord.gg/xHQecAgr9j
 
 </div>
 <p align="center">
-  <img src="https://cdn.discordapp.com/attachments/1437670890144927946/1437789214568611930/Frame_1.png?ex=6914850d&is=6913338d&hm=6aa3051c96c789774e817dbf6723406e0523a0fceccd81afaaed73b145dc6539&" width="250" height="250">
+  <img src="https://cdn.discordapp.com/icons/1442735740550250568/71b7eba2ca3ca2b1d80e9ceaf988f235.png?size=1024" width="250" height="250">
 </p>
 
 ## ✨ Features
