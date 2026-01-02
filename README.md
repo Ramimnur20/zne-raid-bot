@@ -25,7 +25,7 @@ It is designed to be a **fast and good raider** and demonstrate new ways of raid
 pip install -r requirements.txt
 
 # edit the config
-insomnia/config.json
+zne/config.json
 
 # Run
 python main.py
