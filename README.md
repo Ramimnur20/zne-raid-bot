@@ -7,7 +7,7 @@ It is designed to be a **fast and good raider** and demonstrate new ways of raid
 
 </div>
 <p align="center">
-  <img src="https://cdn.discordapp.com/icons/1442735740550250568/71b7eba2ca3ca2b1d80e9ceaf988f235.png?size=1024" width="250" height="250">
+  <img src="https://cdn.discordapp.com/icons/1446123658874458246/a11f8131e9e148f0e599ef09c0e9809d.webp?size=1024" width="250" height="250">
 </p>
 
 ## ✨ Features
