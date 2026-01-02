@@ -2,12 +2,12 @@
   
 # 💎 ZNE
 
-**ZNE** is a **Discord raid bot**.  
+**ZNE** is a **Discord raid bot** that is based off the popular **Insomnia**  
 It is designed to be a **fast and good raider** and demonstrate new ways of raiding servers by bypassing some limits.
 
 </div>
 <p align="center">
-  <img src="https://cdn.discordapp.com/icons/1442735740550250568/71b7eba2ca3ca2b1d80e9ceaf988f235.png?size=1024" width="250" height="250">
+  <img src="https://cdn.discordapp.com/icons/1446123658874458246/a11f8131e9e148f0e599ef09c0e9809d.webp?size=1024" width="250" height="250">
 </p>
 
 ## ✨ Features
@@ -25,7 +25,7 @@ It is designed to be a **fast and good raider** and demonstrate new ways of raid
 pip install -r requirements.txt
 
 # edit the config
-insomnia/config.json
+zne/config.json
 
 # Run
 python main.py
