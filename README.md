@@ -4,6 +4,7 @@
 
 **ZNE** is a **Discord raid bot**.  
 It is designed to be a **fast and good raider** and demonstrate new ways of raiding servers by bypassing some limits.
+you may go to the branch 2.6 to find the code
 
 </div>
 <p align="center">
@@ -44,5 +45,3 @@ python main.py
 🔸 Always use responsibly in **controlled environments** such as penetration testing labs or awareness training. 
 
 ##
-
-BTW go to the beta1.8 branch to find the main.py
