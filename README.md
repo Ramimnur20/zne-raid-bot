@@ -8,7 +8,7 @@ you may go to the branch 2.6 to find the code
 
 </div>
 <p align="center">
-  <img src="https://cdn.discordapp.com/icons/1446123658874458246/a11f8131e9e148f0e599ef09c0e9809d.webp?size=1024" width="250" height="250">
+  <img src="https://files.catbox.moe/s2hn6f.png">
 </p>
 
 ## ✨ Features
