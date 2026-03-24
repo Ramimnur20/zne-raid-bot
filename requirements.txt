@@ -1,0 +1,6 @@
+discord.py
+asyncio
+aiosqlite
+requests
+Pillow
+psutil
