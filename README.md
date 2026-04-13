@@ -1,25 +1,15 @@
-# ZNE Raid Bot 🤖⚡
-
-ZNE is a powerful Discord raid bot designed for stress testing, automation, and server management experimentation. Built for speed, flexibility, and controlled chaos.
-
+# ZNE RAID BOT
 ---
-
-## 🚀 Features
-
-- ⚡ High-speed message sending
-- 🔁 Channel spam & loop messaging
-- 👥 Mass DM capabilities
-- 🧹 Channel & role management
-- 🔥 Webhook-based messaging
-- 🛠️ Easy configuration
-- 🧠 Lightweight and fast execution
-
+ZNE Raid bot is a Modern, Fast and Easy to use Discord Raider bot.
+[Commands](https://zne.gt.tc/commands/) | [Website](https://zne.gt.tc/) | [Discord](https://discord.gg/rFzuVbAQZR)
 ---
-
-## 📦 Installation
-
-```bash
+# Setup
+with venv (recommended)
+```py
 git clone https://github.com/Ramimnur20/zne-raid-bot.git
 cd zne-raid-bot
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 python main.py
+```
