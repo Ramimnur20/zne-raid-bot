@@ -20,6 +20,6 @@
 
 ###
 
-<p align="left">if you found this bot helpful, please drop a ⭐</p>
+<p align="center">if you found this bot helpful, please drop a ⭐</p>
 
 ###
