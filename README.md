@@ -4,22 +4,18 @@
 
 ###
 
-<h2 align="center">ZNE - NextGen Discord Raider.</h2>
+<h2 align="center">ZNE - Discord Raider.</h2>
 
 ###
 
 <p align="center">
   <a href="https://zne.gt.tc/commands/">Commands</a> |
   <a href="https://zne.gt.tc/">Website</a> |
-  <a href="https://discord.gg/rFzuVbAQZR">Discord</a>
 </p>
 
 ###
 
-<p align="center">ZNE is a Discord Raider focused on Speed and Features.</p>
-
-###
-
-<p align="center">if you found this bot helpful, please drop a ⭐</p>
+<p align="center">ZNE was a Discord Raider focused on Speed and Features</p>
+<p align="center">it has reached its end of life and was discontinued on april 23 2026.</p>
 
 ###
