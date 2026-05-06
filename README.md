@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://zne.gt.tc/commands/">Commands</a> |
   <a href="https://zne.gt.tc/">Website</a> |
-  <a href="https://discord.gg/sd8FByFRXT">Discord</a> |
+  <a href="https://discord.gg/sd8FByFRXT">Discord</a>
 </p>
 
 ###
