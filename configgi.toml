@@ -1,0 +1,23 @@
+TOKEN = "MTQblahblah"
+owner_ids = [1234567891011121314]
+owner_blacklist_bypass = 1
+zne_invite = "https://discord.gg/RqTCnuyhGN"
+
+
+[server]
+required_server_id = 1234567891011121314
+verified_role_id = 1234567891011121314
+
+[channels]
+log_channel_id = 1234567891011121314
+
+[messages]
+og_msg = """
+# OWNED 
+-# @everyone @here
+\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+https://discord.gg/RqTCnuyhGN
+"""

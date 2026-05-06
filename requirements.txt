@@ -1,6 +1,6 @@
 discord.py
 asyncio
-aiosqlite
+lmdb
 requests
 Pillow
 psutil
