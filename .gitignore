@@ -37,7 +37,8 @@ env/
 *~
 
 # Database / runtime data
-data.db/
+data.db/*
+!data.db/.gitkeep
 *.mdb
 *.db
 

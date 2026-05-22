@@ -1,0 +1,2 @@
+# This file ensures the data.db/ directory is tracked in git (as an empty folder).
+# The actual database files (data.mdb, lock.mdb, etc.) are ignored and never committed.
