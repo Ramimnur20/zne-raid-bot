@@ -1,5 +1,6 @@
 ﻿# Secrets
-config.toml
+# config.toml is intentionally tracked as an empty placeholder.
+# Real secrets go in your local copy (protected via skip-worktree).
 
 # Python
 __pycache__/
