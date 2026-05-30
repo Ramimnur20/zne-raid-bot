@@ -10,8 +10,9 @@ with open("config.toml", "rb") as f:
     _config = tomllib.load(f)
 
 TOKEN = _config["TOKEN"]
-REQUIRED_SERVER_ID = _config["server"]["required_server_id"]
-VERIFIED_ROLE_ID = _config["server"]["verified_role_id"]
+OWNER_IDS = [int(uid) for uid in _config.get("owner_ids", [])]
+OWNER_BLACKLIST_BYPASS = bool(_config.get("owner_blacklist_bypass", 0))
+MAIN_SERVER_ID = int(_config.get("main_server", 0))
 
 # Configure console logger
 logging.basicConfig(
@@ -24,14 +25,22 @@ logger = logging.getLogger(__name__)
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="z", intents=intents)
 
-@bot.event
-async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    if isinstance(error, app_commands.CheckFailure):
-        try:
-            await interaction.response.send_message("❌ You or this server is blacklisted from using the bot.", ephemeral=True)
-        except discord.InteractionResponded:
-            await interaction.followup.send("❌ You or this server is blacklisted from using the bot.", ephemeral=True)
+async def global_interaction_check(interaction: discord.Interaction) -> bool:
+    guild_id = interaction.guild_id
+    user_id = interaction.user.id
 
+    if guild_id is not None and int(guild_id) == MAIN_SERVER_ID:
+        if OWNER_BLACKLIST_BYPASS and user_id in OWNER_IDS:
+            logger.info(f"Bypass: Owner {interaction.user} used a command in protected server.")
+            return True
+        
+        await interaction.response.send_message("u can't raid this server lil bro 😂✌🏿")
+        return False
+
+    return True
+
+# Explicitly assign the check to the tree
+bot.tree.interaction_check = global_interaction_check
 
 COGS = [
     "commands.raid",
@@ -40,12 +49,9 @@ COGS = [
     "commands.fake",
     "commands.dm",
     "commands.ad",
-    "commands.lag",
 ]
 
 from utils.db import init_db
-from views import JoinMessage, VerifiedRoleMessage
-from utils.globals import command_count, save_command_count
 from utils.helpers import post_commands_to_api
 
 
@@ -56,17 +62,17 @@ async def on_ready():
 
     for cog in COGS:
         await bot.load_extension(cog)
-        logger.info(f"Loaded cog: {cog}")
+        logger.info(f"loaded {cog}")
 
     await bot.tree.sync()
-    logger.info(f"Logged in as {bot.user}")
+    logger.info(f"i am {bot.user}")
 
     await post_commands_to_api(bot)
     
     activity = discord.Activity(
-        name=f"{command_count} raids...",
+        name="zne.breed.rip",
         type=discord.ActivityType.streaming,
-        url="https://twitch.tv"
+        url="https://twitch.tv/packgod"
     )
     await bot.change_presence(activity=activity)
 

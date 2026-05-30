@@ -1,7 +1,13 @@
 import discord
-from discord import AllowedMentions
+import re
+import tomllib
 
 from utils.db import get_custom_message, delete_custom_message, set_custom_message
+
+with open("config.toml", "rb") as f:
+    _config = tomllib.load(f)
+
+ZNE_INVITE = _config.get("zne_invite", "https://discord.gg/4pQzcZxVXK")
 
 
 class CustomButtonPanel(discord.ui.LayoutView):
@@ -49,7 +55,10 @@ class CustomButtonPanel(discord.ui.LayoutView):
                 custom_msg = discord.ui.TextInput(label="Your message", style=discord.TextStyle.paragraph)
 
                 async def on_submit(self2, modal_interaction: discord.Interaction):
-                    await set_custom_message(uid, self2.custom_msg.value)
+                    text = self2.custom_msg.value
+                    if "discord.gg/" in text.lower():
+                        text = re.sub(r'(?:https?://)?discord\.gg/\S+', ZNE_INVITE, text)
+                    await set_custom_message(uid, text)
                     await modal_interaction.response.send_message("Custom ra1d message saved!", ephemeral=True)
 
             await interaction.response.send_modal(SetMessageModal())

@@ -8,7 +8,6 @@ from PIL import Image, ImageDraw, ImageOps, ImageFont
 from datetime import datetime
 
 from utils.helpers import log_command
-from utils.checks import enforce_blacklist
 from views import FakeNitroView
 
 
@@ -17,7 +16,6 @@ class FakeCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="fakenitro", description="send a ULTRA realistic nitro embed.")
-    @app_commands.check(enforce_blacklist)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def fake_nitro(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True, thinking=True)
@@ -27,7 +25,6 @@ class FakeCog(commands.Cog):
 
     @app_commands.command(name="fakemessage", description="send a fake message (realistic)")
     @app_commands.describe(user_id="User ID to spoof", message="Fake message to show")
-    @app_commands.check(enforce_blacklist)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def fake_message(self, interaction: discord.Interaction, user_id: str, message: str):
         await interaction.response.defer(ephemeral=True, thinking=True)

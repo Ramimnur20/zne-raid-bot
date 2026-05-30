@@ -1,25 +1,64 @@
+import re
 import time
-import random
-import io
-import requests
 import psutil
 import os
+import asyncio
+import aiohttp
 import discord
 import tomllib
 from discord import app_commands
 from discord.ext import commands
-from PIL import Image, ImageDraw, ImageOps, ImageFont
-from datetime import datetime, timedelta
 
 with open("config.toml", "rb") as f:
     _config = tomllib.load(f)
 
 ZNE_INVITE = _config.get("zne_invite", "https://discord.gg/4pQzcZxVXK")
+LAG_MESSAGE = _config.get("lag", {}).get("lag_msg", "LAGGED BY ZNE - https://discord.gg/4pQzcZxVXK")
 
 from utils.helpers import log_command
-from utils.checks import enforce_blacklist
 from views import SpamButton, PingPanel, CustomButtonPanel, GifSpamButton, make_farm_panel, make_custom_spam_panel, make_filespam_panel, FakeNitroView
-from utils.globals import command_count
+
+
+async def _send_message_http(session: aiohttp.ClientSession, application_id: int, interaction_token: str, content: str):
+    url = f"https://discord.com/api/v10/webhooks/{application_id}/{interaction_token}"
+    payload = {"content": content, "allowed_mentions": {"parse": ["everyone", "users", "roles"]}}
+    
+    async with session.post(url, json=payload) as resp:
+        return resp.status
+
+
+class LagButton(discord.ui.LayoutView):
+    def __init__(self, user_id: int):
+        super().__init__(timeout=None)
+        self.user_id = user_id
+
+    container1 = discord.ui.Container(
+        discord.ui.ActionRow(
+            discord.ui.Button(
+                style=discord.ButtonStyle.secondary,
+                label="LAG",
+                emoji="<:evil_brown:1502233792193232987>",
+                custom_id="send_lag_button",
+            ),
+        ),
+    )
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.data.get("custom_id") == "send_lag_button":
+            await interaction.response.defer()
+
+            app_id = interaction.client.application_id
+            token = interaction.token
+
+            async with aiohttp.ClientSession() as session:
+                tasks = [
+                    _send_message_http(session, app_id, token, LAG_MESSAGE)
+                    for _ in range(5)
+                ]
+                await asyncio.gather(*tasks)
+
+            return False
+        return True
 
 
 class RaidCog(commands.Cog):
@@ -28,7 +67,6 @@ class RaidCog(commands.Cog):
 
     @app_commands.command(name="ra1d", description="[deprecated] self explanatory.")
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    @app_commands.check(enforce_blacklist)
     async def ra1d(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True, thinking=True)
         await interaction.followup.send(view=SpamButton(interaction.user.id), ephemeral=True)
@@ -36,7 +74,6 @@ class RaidCog(commands.Cog):
 
     @app_commands.command(name="interaction-ra1d", description="interaction raiding.")
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    @app_commands.check(enforce_blacklist)
     async def interaction_ra1d(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True, thinking=True)
         await interaction.followup.send(
@@ -47,7 +84,6 @@ class RaidCog(commands.Cog):
 
     @app_commands.command(name="custom_ra1d", description="open the custom ra1d message panel")
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    @app_commands.check(enforce_blacklist)
     async def custom_ra1d(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True, thinking=True)
         await interaction.followup.send(view=CustomButtonPanel(interaction.user.id), ephemeral=True)
@@ -55,7 +91,6 @@ class RaidCog(commands.Cog):
 
     @app_commands.command(name="thug", description="thug the server!!")
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    @app_commands.check(enforce_blacklist)
     async def thug(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True, thinking=True)
         await interaction.followup.send(view=GifSpamButton(interaction.user.id), ephemeral=True)
@@ -64,7 +99,6 @@ class RaidCog(commands.Cog):
     @app_commands.command(name="blame", description="blame a user for raiding.")
     @app_commands.describe(user="The user to blame")
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    @app_commands.check(enforce_blacklist)
     async def blame(self, interaction: discord.Interaction, user: discord.User):
         await interaction.response.defer(ephemeral=True)
         loading_msg = await interaction.followup.send("❗ blaming....", ephemeral=True)
@@ -95,7 +129,6 @@ class RaidCog(commands.Cog):
     @app_commands.command(name="say", description="say something through the bot.")
     @app_commands.describe(text="The text for the bot to say")
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    @app_commands.check(enforce_blacklist)
     async def say(self, interaction: discord.Interaction, text: str):
         await interaction.response.defer(ephemeral=True)
         await interaction.followup.send("sending..", ephemeral=True)
@@ -104,16 +137,18 @@ class RaidCog(commands.Cog):
     @app_commands.command(name="spam", description="spam something.")
     @app_commands.describe(text="The message to spam")
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    @app_commands.check(enforce_blacklist)
     async def spam(self, interaction: discord.Interaction, text: str):
         await interaction.response.defer(ephemeral=True, thinking=True)
+
+        if "discord.gg/" in text.lower():
+            text = re.sub(r'(?:https?://)?discord\.gg/\S+', ZNE_INVITE, text)
+
         await interaction.followup.send(view=make_custom_spam_panel(interaction.user.id, text), ephemeral=True)
         await log_command(interaction, "spam", f"user spammed: {text}")
 
     @app_commands.command(name="filespam", description="spam a file attachment.")
     @app_commands.describe(attachment="The file to spam")
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    @app_commands.check(enforce_blacklist)
     async def filespam(self, interaction: discord.Interaction, attachment: discord.Attachment):
         await interaction.response.defer(ephemeral=True, thinking=True)
         await interaction.followup.send(view=make_filespam_panel(interaction.user.id, attachment), ephemeral=True)
@@ -121,7 +156,6 @@ class RaidCog(commands.Cog):
 
     @app_commands.command(name="info", description="info.")
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    @app_commands.check(enforce_blacklist)
     async def info(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True, thinking=True)
         # Get system stats
@@ -142,7 +176,7 @@ class RaidCog(commands.Cog):
         
         # Get ZNE server member count
         zne_server = self.bot.get_guild(1470774657266483358)
-        zne_member_count = zne_server.member_count if zne_server else "Server Teminated."
+        zne_member_count = zne_server.member_count if zne_server else "Server Terminated."
         
         # Get total synced commands
         total_synced_commands = len(self.bot.tree.get_commands())
@@ -154,7 +188,6 @@ class RaidCog(commands.Cog):
             "bot was made in **June 2025**\n" \
             "this is the **raid** bot\n" \
             f"total commands synced: **{total_synced_commands}**\n" \
-            f"total commands executed: **{command_count}**\n" \
             f"ram usage: **{ram_usage:.2f} MB**\n" \
             f"cpu usage: **{cpu_usage:.2f}%**\n\n" \
             f"libraries installed: \n - {libs_formatted}\n\n" \
@@ -173,6 +206,13 @@ class RaidCog(commands.Cog):
         view = InfoView()
         await interaction.followup.send(view=view, ephemeral=True)
         await log_command(interaction, "info", "user viewed bot info")
+
+    @app_commands.command(name="lag", description="crash peoples phones for fun.")
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def lag(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        await interaction.followup.send(view=LagButton(interaction.user.id), ephemeral=True)
+        await log_command(interaction, "lag", "user lagged a server")
 
 
 async def setup(bot: commands.Bot):

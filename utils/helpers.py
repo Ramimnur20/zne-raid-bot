@@ -14,10 +14,6 @@ LOG_CHANNEL_ID = _config["channels"]["log_channel_id"]
 user_farm_tokens: dict[int, list[str]] = {}
 
 
-def is_owner(interaction: discord.Interaction) -> bool:
-    return interaction.user.id in OWNER_IDS
-
-
 async def log_command(interaction: discord.Interaction, name: str, details: str):
     username = interaction.user.name
     user_mention = interaction.user.mention
@@ -61,8 +57,8 @@ api_logger = logging.getLogger(__name__)
 
 
 async def post_commands_to_api(bot: commands.Bot):
-    if not API_URL or not API_SECRET:
-        api_logger.warning("API URL or secret not configured, skipping web command update")
+    if not API_SECRET:
+        api_logger.info("Skipping web command update (api.secret not configured)")
         return
 
     CATEGORY_MAP = {

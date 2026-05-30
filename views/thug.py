@@ -62,19 +62,19 @@ class GifSpamButton(discord.ui.LayoutView):
 
             gifs = load_gifs()
             if len(gifs) < 3:
-                await interaction.followup.send("❌ ERROR `could not load gifs from thug.txt, it has less then 3 gifs!`", ephemeral=True)
+                await interaction.followup.send("❌ ERROR `could not load gifs from thug.txt, it has less than 3 gifs!`", ephemeral=True)
                 return False
 
             app_id = interaction.client.application_id
             token = interaction.token
 
             async with aiohttp.ClientSession() as session:
-                async def send_gif_group(i: int):
+                async def send_gif_group():
                     chosen = random.sample(gifs, 3)
                     msg = "@everyone\n" + "\n".join(f"# {g}" for g in chosen)
                     await _send_message_http(session, app_id, token, msg)
 
-                await asyncio.gather(*[send_gif_group(i) for i in range(5)])
+                await asyncio.gather(*[send_gif_group() for _ in range(5)])
 
             return False
         return True
