@@ -1,53 +1,6 @@
-﻿# Secrets
-# config.toml is intentionally tracked as an empty placeholder.
-# Real secrets go in your local copy (protected via skip-worktree).
-
-# Python
+﻿venv/
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environments
-venv/
-ENV/
-env/
-.venv/
-
-# IDE / Editor
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Database / runtime data
-data.db/*
-!data.db/.gitkeep
-*.mdb
-*.db
-
-# Misc project artifacts
-*.zip
-*.log
-*.tmp
-
-# OS
-.DS_Store
-Thumbs.db
+*.pyc
+data.db
+config.toml
+.env

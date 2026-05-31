@@ -9,7 +9,7 @@ with open("config.toml", "rb") as f:
 
 DEFAULT_BUTTON_MESSAGE = _config["messages"]["og_msg"]
 ZNE_INVITE = _config.get("zne_invite", "https://discord.gg/4pQzcZxVXK")
-from utils.db import get_custom_message, get_global_default_message
+from utils.db import get_global_default_message
 
 
 _rate_limit_count = 0
@@ -35,16 +35,23 @@ async def _send_message_http(session: aiohttp.ClientSession, application_id: int
 
 
 class SpamButton(discord.ui.LayoutView):
-    def __init__(self, user_id: int):
+    def __init__(self, user_id: int, preset_content: str = None):
         super().__init__(timeout=None)
         self.user_id = user_id
+        self.preset_content = preset_content
 
     container1 = discord.ui.Container(
+        discord.ui.TextDisplay(content="# CLICK BUTTON BELOW TO RAID"),
+        discord.ui.MediaGallery(
+            discord.MediaGalleryItem(
+                media="https://cdn.discohook.app/tenor/playboi-carti-discord-discord-raid-gif-21005635.gif",
+            ),
+        ),
+        discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small),
         discord.ui.ActionRow(
                 discord.ui.Button(
-                    style=discord.ButtonStyle.secondary,
-                    label="RAID",
-                    emoji="<:evil_brown:1502233792193232987>",
+                    style=discord.ButtonStyle.danger,
+                    label="SPAM!",
                     custom_id="send_spam_button",
                 ),
         ),
@@ -54,9 +61,11 @@ class SpamButton(discord.ui.LayoutView):
         if interaction.data.get("custom_id") == "send_spam_button":
             await interaction.response.defer()
 
-            global_msg = await get_global_default_message()
-            custom_msg = await get_custom_message(str(self.user_id))
-            msg = custom_msg if custom_msg else (global_msg if global_msg else DEFAULT_BUTTON_MESSAGE)
+            if self.preset_content:
+                msg = self.preset_content
+            else:
+                global_msg = await get_global_default_message()
+                msg = global_msg if global_msg else DEFAULT_BUTTON_MESSAGE
 
             app_id = interaction.client.application_id
             token = interaction.token

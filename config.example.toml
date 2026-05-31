@@ -1,0 +1,21 @@
+TOKEN = ""
+owner_ids = [1474991745443037194]
+owner_blacklist_bypass = 0
+zne_invite = "https://discord.gg/minecraft"
+main_server = 0
+
+
+[server]
+required_server_id = 0
+verified_role_id = 0
+
+[channels]
+log_channel_id = 0
+
+[messages]
+og_msg = """
+"""
+
+[api]
+url = "https://example.com/api/commands"
+secret = ""

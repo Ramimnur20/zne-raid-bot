@@ -4,7 +4,7 @@ from .farm import make_farm_panel
 from .spam import SpamButton, CustomSpamButton, make_custom_spam_panel, make_filespam_panel
 from .ping import PingPanel
 from .thug import GifSpamButton, load_gifs
-from .custom import CustomButtonPanel
+from .custom import PresetManagementView
 
 __all__ = [
     "REQUIRED_SERVER_ID",
@@ -20,5 +20,5 @@ __all__ = [
     "PingPanel",
     "GifSpamButton",
     "load_gifs",
-    "CustomButtonPanel",
+    "PresetManagementView",
 ]

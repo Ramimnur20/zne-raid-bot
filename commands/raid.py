@@ -16,7 +16,8 @@ ZNE_INVITE = _config.get("zne_invite", "https://discord.gg/4pQzcZxVXK")
 LAG_MESSAGE = _config.get("lag", {}).get("lag_msg", "LAGGED BY ZNE - https://discord.gg/4pQzcZxVXK")
 
 from utils.helpers import log_command
-from views import SpamButton, PingPanel, CustomButtonPanel, GifSpamButton, make_farm_panel, make_custom_spam_panel, make_filespam_panel, FakeNitroView
+from views import SpamButton, PingPanel, GifSpamButton, make_farm_panel, make_custom_spam_panel, make_filespam_panel, FakeNitroView, PresetManagementView
+from utils.db import get_user_presets, get_preset_by_title
 
 
 async def _send_message_http(session: aiohttp.ClientSession, application_id: int, interaction_token: str, content: str):
@@ -65,19 +66,40 @@ class RaidCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    async def preset_autocomplete(self, interaction: discord.Interaction, current: str):
+        presets = await get_user_presets(str(interaction.user.id))
+        return [
+            app_commands.Choice(name=p['title'], value=p['title'])
+            for p in presets if current.lower() in p['title'].lower()
+        ][:25]
+
     @app_commands.command(name="ra1d", description="[deprecated] self explanatory.")
+    @app_commands.describe(preset="Optional preset to use for the raid")
+    @app_commands.autocomplete(preset=preset_autocomplete)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def ra1d(self, interaction: discord.Interaction):
+    async def ra1d(self, interaction: discord.Interaction, preset: str = None):
         await interaction.response.defer(ephemeral=True, thinking=True)
-        await interaction.followup.send(view=SpamButton(interaction.user.id), ephemeral=True)
+        
+        preset_content = None
+        if preset:
+            preset_content = await get_preset_by_title(str(interaction.user.id), preset)
+
+        await interaction.followup.send(view=SpamButton(interaction.user.id, preset_content), ephemeral=True)
         await log_command(interaction, "ra1d", "user raided a server")
 
     @app_commands.command(name="interaction-ra1d", description="interaction raiding.")
+    @app_commands.describe(preset="Optional preset to use for the interaction raid")
+    @app_commands.autocomplete(preset=preset_autocomplete)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-    async def interaction_ra1d(self, interaction: discord.Interaction):
+    async def interaction_ra1d(self, interaction: discord.Interaction, preset: str = None):
         await interaction.response.defer(ephemeral=True, thinking=True)
+
+        preset_content = None
+        if preset:
+            preset_content = await get_preset_by_title(str(interaction.user.id), preset)
+
         await interaction.followup.send(
-            view=make_farm_panel(interaction.user.id, 0),
+            view=make_farm_panel(interaction.user.id, 0, preset_content),
             ephemeral=True
         )
         await log_command(interaction, "interaction-ra1d", "user opened interaction farm panel")
@@ -86,7 +108,7 @@ class RaidCog(commands.Cog):
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def custom_ra1d(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True, thinking=True)
-        await interaction.followup.send(view=CustomButtonPanel(interaction.user.id), ephemeral=True)
+        await interaction.followup.send(view=PresetManagementView(interaction.user.id), ephemeral=True)
         await log_command(interaction, "custom_ra1d", "user opened custom message panel")
 
     @app_commands.command(name="thug", description="thug the server!!")
@@ -108,7 +130,7 @@ class RaidCog(commands.Cog):
         class Components(discord.ui.LayoutView):
             container1 = discord.ui.Container(
                 discord.ui.Section(
-                    discord.ui.TextDisplay(content=f"# <:checkmark:1502219659074863185> {user.mention} ur raid was completed!\nthanks for using **ZNE** bot to raid servers! your trial will end in <t:{expires_ts}:R>"),
+                    discord.ui.TextDisplay(content=f"# {user.mention} ur raid was completed!\nthanks for using **ZNE** bot to raid servers! your trial will end in <t:{expires_ts}:R>"),
                     accessory=discord.ui.Thumbnail(
                         media=avatar_url,
                     ),

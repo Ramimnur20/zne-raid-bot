@@ -8,7 +8,7 @@ with open("config.toml", "rb") as f:
     _config = tomllib.load(f)
 
 DEFAULT_BUTTON_MESSAGE = _config["messages"]["og_msg"]
-from utils.db import get_global_default_message, get_custom_message
+from utils.db import get_global_default_message
 from utils.helpers import user_farm_tokens
 
 
@@ -34,7 +34,7 @@ async def _send_message_http(session: aiohttp.ClientSession, application_id: int
         return resp.status
 
 
-def make_farm_panel(user_id: int, token_count: int = 0):
+def make_farm_panel(user_id: int, token_count: int = 0, preset_content: str = None):
     message_count = token_count * 5
 
     class FarmPanel(discord.ui.LayoutView):
@@ -80,6 +80,7 @@ def make_farm_panel(user_id: int, token_count: int = 0):
         def __init__(self):
             super().__init__(timeout=None)
             self.user_id = user_id
+            self.preset_content = preset_content
 
         async def interaction_check(self, interaction: discord.Interaction) -> bool:
             cid = interaction.data.get("custom_id")
@@ -102,7 +103,7 @@ def make_farm_panel(user_id: int, token_count: int = 0):
                 new_token_count = len(user_farm_tokens[uid])
 
                 await interaction.response.defer()
-                await interaction.edit_original_response(view=make_farm_panel(uid, new_token_count))
+                await interaction.edit_original_response(view=make_farm_panel(uid, new_token_count, self.preset_content))
                 return False
 
             if cid == "25bc77ecdea348afe7d2a759bcb1a344":
@@ -114,9 +115,11 @@ def make_farm_panel(user_id: int, token_count: int = 0):
 
                 tokens = user_farm_tokens[uid]
 
-                global_msg = await get_global_default_message()
-                custom_msg = await get_custom_message(str(uid))
-                msg = global_msg if global_msg else (custom_msg if custom_msg else DEFAULT_BUTTON_MESSAGE)
+                if self.preset_content:
+                    msg = self.preset_content
+                else:
+                    global_msg = await get_global_default_message()
+                    msg = global_msg if global_msg else DEFAULT_BUTTON_MESSAGE
 
                 app_id = interaction.client.application_id
 
@@ -133,7 +136,7 @@ def make_farm_panel(user_id: int, token_count: int = 0):
                 total_messages = len(tokens) * 5
                 user_farm_tokens[uid] = []
 
-                await interaction.edit_original_response(view=make_farm_panel(uid, 0))
+                await interaction.edit_original_response(view=make_farm_panel(uid, 0, self.preset_content))
                 await interaction.followup.send(f"Attack complete! Sent {total_messages} messages.", ephemeral=True)
                 return False
 
