@@ -1,12 +1,11 @@
 TOKEN = ""
-owner_ids = [1474991745443037194]
+owner_ids = []
 owner_blacklist_bypass = 0
-zne_invite = "https://discord.gg/minecraft"
+zne_invite = "https://discord.gg/4pQzcZxVXK"
 main_server = 0
 
 
 [server]
-required_server_id = 0
 verified_role_id = 0
 
 [channels]
@@ -14,8 +13,15 @@ log_channel_id = 0
 
 [messages]
 og_msg = """
+# OWNED 
+-# @everyone @here
+\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+https://discord.gg/4pQzcZxVXK
 """
 
 [api]
-url = "https://example.com/api/commands"
+url = ""
 secret = ""

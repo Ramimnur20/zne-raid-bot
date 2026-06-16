@@ -4,35 +4,11 @@ import discord
 import tomllib
 from discord import AllowedMentions
 
+from utils.db import get_global_default_message
+from utils.helpers import user_farm_tokens, send_message_http
+
 with open("config.toml", "rb") as f:
     _config = tomllib.load(f)
-
-DEFAULT_BUTTON_MESSAGE = _config["messages"]["og_msg"]
-from utils.db import get_global_default_message
-from utils.helpers import user_farm_tokens
-
-
-_rate_limit_count = 0
-_rate_limit_delay = 0.001
-
-
-async def _send_message_http(session: aiohttp.ClientSession, application_id: int, interaction_token: str, content: str):
-    global _rate_limit_count, _rate_limit_delay
-    
-    url = f"https://discord.com/api/v10/webhooks/{application_id}/{interaction_token}"
-    payload = {"content": content, "allowed_mentions": {"parse": ["everyone", "users", "roles"]}}
-    
-    async with session.post(url, json=payload) as resp:
-        if resp.status == 429:
-            _rate_limit_count += 1
-            if _rate_limit_count >= 10:
-                _rate_limit_delay += 0.01
-                _rate_limit_count = 0
-            await asyncio.sleep(_rate_limit_delay)
-            async with session.post(url, json=payload) as retry_resp:
-                return retry_resp.status
-        return resp.status
-
 
 def make_farm_panel(user_id: int, token_count: int = 0, preset_content: str = None):
     message_count = token_count * 5
@@ -45,17 +21,17 @@ def make_farm_panel(user_id: int, token_count: int = 0, preset_content: str = No
                 discord.ui.Button(
                     style=discord.ButtonStyle.secondary,
                     label="FARM",
-                    custom_id="83d8a9b0052c44e1b7f2d99648e57780",
+                    custom_id="button1",
                 ),
                 discord.ui.Button(
                     style=discord.ButtonStyle.secondary,
                     label="FARM",
-                    custom_id="d464c1b80bf24413e84ec24aa2d21712",
+                    custom_id="button2",
                 ),
                 discord.ui.Button(
                     style=discord.ButtonStyle.secondary,
                     label="FARM",
-                    custom_id="e0f948640c114d1f9b09e6b2c866a167",
+                    custom_id="button3",
                 ),
                 discord.ui.Button(
                     style=discord.ButtonStyle.secondary,
@@ -90,9 +66,9 @@ def make_farm_panel(user_id: int, token_count: int = 0, preset_content: str = No
                 user_farm_tokens[uid] = []
 
             farm_ids = [
-                "83d8a9b0052c44e1b7f2d99648e57780",
-                "d464c1b80bf24413e84ec24aa2d21712",
-                "e0f948640c114d1f9b09e6b2c866a167",
+                "button1",
+                "button2",
+                "button3",
                 "512621409dcf4c17c3f43c26142784a4",
                 "2b89e9b10c7e41e195a3a2d46be14839",
             ]
@@ -119,14 +95,14 @@ def make_farm_panel(user_id: int, token_count: int = 0, preset_content: str = No
                     msg = self.preset_content
                 else:
                     global_msg = await get_global_default_message()
-                    msg = global_msg if global_msg else DEFAULT_BUTTON_MESSAGE
+                    msg = global_msg if global_msg else _config["messages"]["og_msg"]
 
                 app_id = interaction.client.application_id
 
                 async def send_5_messages(tok):
                     async with aiohttp.ClientSession() as session:
                         tasks = [
-                            _send_message_http(session, app_id, tok, msg)
+                            send_message_http(session, app_id, tok, msg)
                             for _ in range(5)
                         ]
                         await asyncio.gather(*tasks)

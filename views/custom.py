@@ -7,12 +7,11 @@ from utils.db import (
     save_user_preset,
     delete_user_preset
 )
+from utils.constants import CHECKMARK, CROSS
 
-with open("config.toml", "rb") as f:
-    _config = tomllib.load(f)
+from utils.helpers import ZNE_INVITE
 
-ZNE_INVITE = _config.get("zne_invite", "https://discord.gg/4pQzcZxVXK")
-
+# No need for tomllib and _config here anymore
 class PresetManagementView(discord.ui.LayoutView):
     def __init__(self, user_id: int):
         super().__init__(timeout=None)
@@ -54,7 +53,7 @@ class PresetManagementView(discord.ui.LayoutView):
         if cid == "1f2bbba5b6594119cb456b88e6f11558":
             presets = await get_user_presets(uid)
             if len(presets) >= 5:
-                await interaction.response.send_message("<:cross:1502219725063852092> You can only have up to 5 presets!", ephemeral=True)
+                await interaction.response.send_message(f"{CROSS} You can only have up to 5 presets!", ephemeral=True)
                 return False
 
             class CreatePresetModal(discord.ui.Modal, title="Create Preset"):
@@ -67,7 +66,7 @@ class PresetManagementView(discord.ui.LayoutView):
                         text = re.sub(r'(?:https?://)?discord\.gg/\S+', ZNE_INVITE, text)
                     
                     await save_user_preset(uid, self2.title_input.value, text)
-                    await modal_interaction.response.send_message(f"<:checkmark:1502219659074863185> Preset `{self2.title_input.value}` saved!", ephemeral=True)
+                    await modal_interaction.response.send_message(f"{CHECKMARK} Preset `{self2.title_input.value}` saved!", ephemeral=True)
 
             await interaction.response.send_modal(CreatePresetModal())
             return False
@@ -148,7 +147,7 @@ class PresetManagementView(discord.ui.LayoutView):
                             @discord.ui.button(label="Confirm Delete", style=discord.ButtonStyle.danger)
                             async def confirm(self, it2: discord.Interaction, button: discord.ui.Button):
                                 await delete_user_preset(self.user_id, self.t)
-                                await it2.response.edit_message(content=f"<:checkmark:1502219659074863185> Deleted preset `{self.t}`", view=None)
+                                await it2.response.edit_message(content=f"{CHECKMARK} Deleted preset `{self.t}`", view=None)
                             
                             @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
                             async def cancel(self, it2: discord.Interaction, button: discord.ui.Button):

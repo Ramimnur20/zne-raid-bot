@@ -4,34 +4,13 @@ import aiohttp
 import discord
 import tomllib
 
+from utils.helpers import ZNE_INVITE
+from utils.db import get_global_default_message
+from utils.helpers import send_message_http
+
 with open("config.toml", "rb") as f:
     _config = tomllib.load(f)
-
 DEFAULT_BUTTON_MESSAGE = _config["messages"]["og_msg"]
-ZNE_INVITE = _config.get("zne_invite", "https://discord.gg/4pQzcZxVXK")
-from utils.db import get_global_default_message
-
-
-_rate_limit_count = 0
-_rate_limit_delay = 0.001
-
-
-async def _send_message_http(session: aiohttp.ClientSession, application_id: int, interaction_token: str, content: str):
-    global _rate_limit_count, _rate_limit_delay
-    
-    url = f"https://discord.com/api/v10/webhooks/{application_id}/{interaction_token}"
-    payload = {"content": content, "allowed_mentions": {"parse": ["everyone", "users", "roles"]}}
-    
-    async with session.post(url, json=payload) as resp:
-        if resp.status == 429:
-            _rate_limit_count += 1
-            if _rate_limit_count >= 10:
-                _rate_limit_delay += 0.01
-                _rate_limit_count = 0
-            await asyncio.sleep(_rate_limit_delay)
-            async with session.post(url, json=payload) as retry_resp:
-                return retry_resp.status
-        return resp.status
 
 
 class SpamButton(discord.ui.LayoutView):
@@ -72,7 +51,7 @@ class SpamButton(discord.ui.LayoutView):
 
             async with aiohttp.ClientSession() as session:
                 tasks = [
-                    _send_message_http(session, app_id, token, msg)
+                    send_message_http(session, app_id, token, msg)
                     for _ in range(5)
                 ]
                 await asyncio.gather(*tasks)
@@ -96,7 +75,7 @@ class CustomSpamButton(discord.ui.LayoutView):
 
             async with aiohttp.ClientSession() as session:
                 tasks = [
-                    _send_message_http(session, app_id, token, self.custom_message)
+                    send_message_http(session, app_id, token, self.custom_message)
                     for _ in range(5)
                 ]
                 await asyncio.gather(*tasks)
@@ -132,7 +111,7 @@ def make_custom_spam_panel(user_id: int, message: str):
 
                 async with aiohttp.ClientSession() as session:
                     tasks = [
-                        _send_message_http(session, app_id, token, self.custom_message)
+                        send_message_http(session, app_id, token, self.custom_message)
                         for _ in range(5)
                     ]
                     await asyncio.gather(*tasks)
@@ -185,7 +164,7 @@ def make_filespam_panel(user_id: int, attachment: discord.Attachment):
 
                 async with aiohttp.ClientSession() as session:
                     tasks = [
-                        _send_message_http(session, app_id, token, attachment_url)
+                        send_message_http(session, app_id, token, attachment_url)
                         for _ in range(5)
                     ]
                     await asyncio.gather(*tasks)
